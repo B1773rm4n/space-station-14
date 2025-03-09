@@ -251,9 +251,7 @@ namespace Content.Server.PDA
                 return;
                 
             // TODO: Implement popout
-            Logger.Info("PDA Popout");
-            Logger.Info(msg);
-            Logger.Info(uid);
+            _logger.Info("PDA Popout");
         }
 
         private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaToggleFlashlightMessage msg)

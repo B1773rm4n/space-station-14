@@ -8,6 +8,7 @@ public sealed class PdaPopout : BoundUserInterfaceMessage
     public PdaPopout() { }
 }
 
+[Serializable, NetSerializable]
 public sealed class PdaToggleFlashlightMessage : BoundUserInterfaceMessage
 {
     public PdaToggleFlashlightMessage() { }
