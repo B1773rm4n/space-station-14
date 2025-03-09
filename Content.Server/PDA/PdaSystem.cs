@@ -57,6 +57,7 @@ namespace Content.Server.PDA
             // UI Events:
             SubscribeLocalEvent<PdaComponent, BoundUIOpenedEvent>(OnPdaOpen);
             SubscribeLocalEvent<PdaComponent, PdaRequestUpdateInterfaceMessage>(OnUiMessage);
+            SubscribeLocalEvent<PdaComponent, PdaPopout>(OnUiMessage);
             SubscribeLocalEvent<PdaComponent, PdaToggleFlashlightMessage>(OnUiMessage);
             SubscribeLocalEvent<PdaComponent, PdaShowRingtoneMessage>(OnUiMessage);
             SubscribeLocalEvent<PdaComponent, PdaShowMusicMessage>(OnUiMessage);
@@ -242,6 +243,12 @@ namespace Content.Server.PDA
                 return;
 
             UpdatePdaUi(uid, pda);
+        }
+
+        private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaPopout msg)
+        {
+            // TODO: Implement popout
+            Logger.Info("PDA Popout");
         }
 
         private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaToggleFlashlightMessage msg)

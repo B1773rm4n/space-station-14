@@ -32,6 +32,10 @@ namespace Content.Client.PDA
         {
             _menu = this.CreateWindowCenteredLeft<PdaMenu>();
 
+            _menu.PopoutButton.OnPressed += _ =>
+            {
+                SendMessage(new PdaPopout());
+            };
             _menu.FlashLightToggleButton.OnToggled += _ =>
             {
                 SendMessage(new PdaToggleFlashlightMessage());
