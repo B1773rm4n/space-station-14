@@ -20,6 +20,8 @@ namespace Content.Client.PDA
             _pdaSystem = EntMan.System<PdaSystem>();
         }
 
+        public PdaMenu? GetMenu() => _menu;
+
         protected override void Open()
         {
             base.Open();
@@ -94,6 +96,13 @@ namespace Content.Client.PDA
         protected override void UpdateState(BoundUserInterfaceState state)
         {
             base.UpdateState(state);
+
+            if (state is PdaPopoutState)
+            {
+                // Send a network event to trigger the PdaSystem's OnPdaPopout method
+                _pdaSystem.CreatePopoutFromBui(this);
+                return;
+            }
 
             if (state is not PdaUpdateState updateState)
                 return;
