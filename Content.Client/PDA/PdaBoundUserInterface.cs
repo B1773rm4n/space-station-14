@@ -36,6 +36,7 @@ namespace Content.Client.PDA
             {
                 SendMessage(new PdaPopout());
             };
+            
             _menu.FlashLightToggleButton.OnToggled += _ =>
             {
                 SendMessage(new PdaToggleFlashlightMessage());

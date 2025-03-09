@@ -247,8 +247,13 @@ namespace Content.Server.PDA
 
         private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaPopout msg)
         {
+            if (!PdaUiKey.Key.Equals(msg.UiKey))
+                return;
+                
             // TODO: Implement popout
             Logger.Info("PDA Popout");
+            Logger.Info(msg);
+            Logger.Info(uid);
         }
 
         private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaToggleFlashlightMessage msg)
