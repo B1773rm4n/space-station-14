@@ -28,8 +28,14 @@ public sealed class PdaSystem : SharedPdaSystem
         Log = _logManager.GetSawmill("pda");
         
     }
+
+    /* The problem with this implementation is that there are 3-4 ways to close a window.
+        It's easy to pop out the PDA. But to keep track of the popout and make sure that it
+        behaves consistent and is always closed, no matter from what way of closing you chose is very hard
+        As this was not a official requirement anyway, I abandon this idea as it was meant as an exploration
+        for the request of AI crew monitor as a separate window   */
     
-    public void OnPdaPopout(PdaMenu menu)
+    public void  OnPdaPopout(PdaMenu menu)
     {
 
         // If we already have a popout window, close it
