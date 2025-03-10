@@ -36,9 +36,9 @@ namespace Content.Client.PDA
 
             _menu.PopoutButton.OnPressed += _ =>
             {
-                SendMessage(new PdaPopout());
+                _pdaSystem.OnPdaPopout(_menu);
             };
-            
+
             _menu.FlashLightToggleButton.OnToggled += _ =>
             {
                 SendMessage(new PdaToggleFlashlightMessage());
@@ -96,13 +96,6 @@ namespace Content.Client.PDA
         protected override void UpdateState(BoundUserInterfaceState state)
         {
             base.UpdateState(state);
-
-            if (state is PdaPopoutState)
-            {
-                // Send a network event to trigger the PdaSystem's OnPdaPopout method
-                _pdaSystem.CreatePopoutFromBui(this);
-                return;
-            }
 
             if (state is not PdaUpdateState updateState)
                 return;

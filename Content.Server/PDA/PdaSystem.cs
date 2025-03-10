@@ -48,22 +48,16 @@ namespace Content.Server.PDA
         [Dependency] private readonly RoundEndSystem _roundEndSystem = default!;
         [Dependency] private readonly EmergencyShuttleSystem _emergencyShuttleSystem = default!;
         [Dependency] private readonly IGameTiming _gameTiming = default!;
-        [Dependency] private readonly ILogManager _logManager = default!;
-
-        private ISawmill _logger = default!;
 
         public override void Initialize()
         {
             base.Initialize();
-            
-            _logger = _logManager.GetSawmill("pda");
 
             SubscribeLocalEvent<PdaComponent, LightToggleEvent>(OnLightToggle);
 
             // UI Events:
             SubscribeLocalEvent<PdaComponent, BoundUIOpenedEvent>(OnPdaOpen);
             SubscribeLocalEvent<PdaComponent, PdaRequestUpdateInterfaceMessage>(OnUiMessage);
-            SubscribeLocalEvent<PdaComponent, PdaPopout>(OnUiMessage);
             SubscribeLocalEvent<PdaComponent, PdaToggleFlashlightMessage>(OnUiMessage);
             SubscribeLocalEvent<PdaComponent, PdaShowRingtoneMessage>(OnUiMessage);
             SubscribeLocalEvent<PdaComponent, PdaShowMusicMessage>(OnUiMessage);
@@ -249,22 +243,6 @@ namespace Content.Server.PDA
                 return;
 
             UpdatePdaUi(uid, pda);
-        }
-
-        private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaPopout msg)
-        {
-            if (!PdaUiKey.Key.Equals(msg.UiKey))
-                return;
-                
-            _logger.Info("PDA Popout");
-            // Hide current PDA
-            // Create new Window
-            // Attach PDA functionality to new window
-
-            // Send a special state update to the client to indicate that we want to create a popout window
-            // The actual popout functionality will be handled on the client side
-            var state = new PdaPopoutState();
-            _ui.SetUiState(uid, PdaUiKey.Key, state);
         }
 
         private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaToggleFlashlightMessage msg)
