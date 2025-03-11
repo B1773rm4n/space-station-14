@@ -29,7 +29,6 @@ using Robust.Shared.Player;
 using Robust.Shared.Utility;
 using Content.Shared.CCVar;
 using Robust.Shared.Timing;
-using Robust.Shared.Log;
 
 namespace Content.Server.PDA
 {
@@ -243,6 +242,17 @@ namespace Content.Server.PDA
                 return;
 
             UpdatePdaUi(uid, pda);
+        }
+
+        private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaPopout msg)
+        {
+            if (!PdaUiKey.Key.Equals(msg.UiKey))
+                return;
+
+            // Send a special state update to the client to indicate that we want to create a popout window
+            // The actual popout functionality will be handled on the client side
+            var state = new PdaPopoutState();
+            _ui.SetUiState(uid, PdaUiKey.Key, state);
         }
 
         private void OnUiMessage(EntityUid uid, PdaComponent pda, PdaToggleFlashlightMessage msg)

@@ -36,6 +36,14 @@ namespace Content.Client.PDA
 
             _menu.PopoutButton.OnPressed += _ =>
             {
+                // If the popout is already open, close it
+                if (_pdaSystem.IsPopoutOpen())
+                {
+                    _pdaSystem.ClosePopoutIfOpen();
+                    return;
+                }
+                
+                // Otherwise, send the message to open it
                 _pdaSystem.OnPdaPopout(_menu);
             };
 
@@ -133,6 +141,17 @@ namespace Content.Client.PDA
         private PdaBorderColorComponent? GetBorderColorComponent()
         {
             return EntMan.GetComponentOrNull<PdaBorderColorComponent>(Owner);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            
+            if (disposing)
+            {
+                // Make sure to close any popout window when the PDA UI is disposed
+                _pdaSystem.ClosePopoutIfOpen();
+            }
         }
     }
 }
