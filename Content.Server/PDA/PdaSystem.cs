@@ -249,7 +249,6 @@ namespace Content.Server.PDA
             if (!PdaUiKey.Key.Equals(msg.UiKey))
                 return;
 
-            // Send a special state update to the client to indicate that we want to create a popout window
             // The actual popout functionality will be handled on the client side
             var state = new PdaPopoutState();
             _ui.SetUiState(uid, PdaUiKey.Key, state);

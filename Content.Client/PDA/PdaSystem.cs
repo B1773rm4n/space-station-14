@@ -15,8 +15,6 @@ public sealed class PdaSystem : SharedPdaSystem
     [Dependency] private readonly IClyde _clyde = default!;
     [Dependency] private readonly IUserInterfaceManager _uiManager = default!;
     [Dependency] private readonly ILogManager _logManager = default!;
-
-    public ISawmill Log { get; private set; } = default!;
     
     // <summary>
     // Starlight-start: PDA Popout
@@ -51,7 +49,6 @@ public sealed class PdaSystem : SharedPdaSystem
     
     private readonly ISawmill _sawmill = Logger.GetSawmill("PdaSystem");
 
-    private PdaMenu? _popoutMenu;
     private IClydeWindow? ClydeWindow;
     private WindowRoot? WindowRoot;
     
@@ -64,9 +61,7 @@ public sealed class PdaSystem : SharedPdaSystem
     public override void Initialize()
     {
         base.Initialize();
-        
-        Log = _logManager.GetSawmill("pda");
-        
+                
         SubscribeNetworkEvent<PdaPopoutState>(OnPdaPopout);
     }
     
@@ -88,60 +83,84 @@ public sealed class PdaSystem : SharedPdaSystem
                 return;
             }
             
-            // Get the menu from the BUI
-            var menu = bui?.GetMenu();
-            if (menu == null)
-            {
-                Log.Error("PDA menu not found when trying to create popout");
-                return;
-            }
-            
-            // Create a new popout window (this will close any existing popout)
-            CreatePopout(menu);
+            // Toggle the popout through the BUI
+            bui?.TogglePopout();
         }
         catch (Exception ex)
         {
             Log.Error($"Error in OnPdaPopout: {ex}");
-            ClosePopout(); // Ensure cleanup if an error occurs
         }
     }
     
-    // This method is called directly from PdaBoundUserInterface when it receives a PdaPopoutState
-    public void CreatePopoutFromBui(PdaBoundUserInterface bui)
+    private bool TryGetPdaBui(EntityUid? uid, out PdaBoundUserInterface? bui)
+    {
+        bui = null;
+        
+        if (uid == null)
+            return false;
+        
+        foreach (var uiComp in EntityManager.GetComponents<UserInterfaceComponent>(uid.Value))
+        {
+            foreach (var ui in uiComp.ClientOpenInterfaces.Values)
+            {
+                if (ui is PdaBoundUserInterface pdaBui)
+                {
+                    bui = pdaBui;
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    // This method is called from PdaBoundUserInterface when it's disposed
+    public void ClosePopoutIfOpen()
     {
         try
         {
-            // If we're already closing, don't try to open a new window
-            if (_isClosingPopout)
+            // Check if we have any popout resources that need to be cleaned up
+            if (_isPopoutOpen || ClydeWindow != null || WindowRoot != null)
             {
-                Log.Warning("Attempted to open PDA popout from BUI while closing another one");
-                return;
+                Log.Debug("Closing PDA popout window from ClosePopoutIfOpen");
+                ClosePopout();
             }
-            
-            var menu = bui.GetMenu();
-            if (menu == null)
-            {
-                Log.Error("PDA menu not found when trying to create popout from BUI");
-                return;
-            }
-            
-            // Create a new popout window (this will close any existing popout)
-            CreatePopout(menu);
         }
         catch (Exception ex)
         {
-            Log.Error($"Error in CreatePopoutFromBui: {ex}");
-            ClosePopout(); // Ensure cleanup if an error occurs
+            Log.Error($"Error in ClosePopoutIfOpen: {ex}");
+            
+            // Force cleanup in case of error
+            ClydeWindow = null;
+            WindowRoot = null;
+            _isPopoutOpen = false;
+            _isClosingPopout = false;
         }
     }
+    
+    // This method should be called during frame updates to check if the window is still valid
 
-    public void OnPdaPopout(PdaMenu menu)
+    public override void FrameUpdate(float frameTime)
     {
-        // Create a new popout window
-        CreatePopout(menu);
-    }
+        base.FrameUpdate(frameTime);
         
-    private void CreatePopout(PdaMenu menu)
+        // Check if the window has been closed externally
+        if (_isPopoutOpen && (ClydeWindow == null || ClydeWindow.IsDisposed))
+        {
+            Log.Debug("Detected externally closed PDA popout window");
+            ClosePopout();
+        }
+    }
+    
+    // Public method to check if the popout is currently open
+    public bool IsPopoutOpen()
+    {
+        // Check both our internal state flag and the actual window state
+        return _isPopoutOpen && ClydeWindow != null && !ClydeWindow.IsDisposed;
+    }
+    
+    // Creates a popout window for the PDA menu
+    public void CreatePopout(PdaMenu menu)
     {
         // If the window is already open, just close it (toggle behavior)
         if (IsPopoutOpen())
@@ -166,10 +185,7 @@ public sealed class PdaSystem : SharedPdaSystem
             menu.OnPdaWindowClosed += ClosePopoutIfOpen;
             
             // Get the second monitor as the primary monitor is the game window
-            // Or why else should someone want to pop out something if they
-            // aren't using at least 2 monitors/displays?
-            // Doesn't seem to work though
-            var monitor = _clyde.EnumerateMonitors().Skip(1).First();
+            var monitor = _clyde.EnumerateMonitors().Skip(1).FirstOrDefault();
 
             // Create a new window        
             ClydeWindow = _clyde.CreateWindow(new WindowCreateParameters
@@ -187,9 +203,6 @@ public sealed class PdaSystem : SharedPdaSystem
             // Create a window root and add the menu to it
             WindowRoot = _uiManager.CreateWindowRoot(ClydeWindow);
             WindowRoot.AddChild(menu);
-            
-            // Store the menu for later
-            _popoutMenu = menu;
             
             // Disable the popout button in the popout window
             menu.PopoutButton.Disabled = true;
@@ -218,13 +231,16 @@ public sealed class PdaSystem : SharedPdaSystem
     }
     
     private void ClosePopout()
+
     {
+        Log.Debug("Start try in ClosePopout");
+
         // If we're already in the process of closing, don't try again
         if (_isClosingPopout)
             return;
             
         // If there's nothing to close, just return
-        if (!_isPopoutOpen && _popoutMenu == null && ClydeWindow == null && WindowRoot == null)
+        if (!_isPopoutOpen && ClydeWindow == null && WindowRoot == null)
             return;
             
         // Set flag to indicate we're closing
@@ -233,26 +249,6 @@ public sealed class PdaSystem : SharedPdaSystem
         try
         {
             Log.Debug("Closing PDA popout window");
-            
-            // First, unsubscribe from events to prevent multiple calls
-            if (_popoutMenu != null)
-            {
-                // Unsubscribe from the window's close event
-                _popoutMenu.OnPdaWindowClosed -= ClosePopoutIfOpen;
-                
-                // Remove the menu from the window root if it has a parent
-                if (_popoutMenu.Parent != null)
-                {
-                    _popoutMenu.Orphan();
-                }
-                
-                // Reset the popout button state - IMPORTANT for toggle behavior
-                _popoutMenu.PopoutButton.Disabled = false;
-                _popoutMenu.PopoutButton.Visible = true;
-                _popoutMenu.PopoutButton.Pressed = false;
-                
-                _popoutMenu = null;
-            }
             
             if (WindowRoot != null)
             {
@@ -287,85 +283,11 @@ public sealed class PdaSystem : SharedPdaSystem
         finally
         {
             // Reset all references to ensure we don't have dangling references
-            _popoutMenu = null;
             ClydeWindow = null;
             WindowRoot = null;
             _isPopoutOpen = false;
             _isClosingPopout = false;
         }
-    }
-    
-    private bool TryGetPdaBui(EntityUid? uid, out PdaBoundUserInterface? bui)
-    {
-        bui = null;
-        
-        if (uid == null)
-            return false;
-        
-        foreach (var uiComp in EntityManager.GetComponents<UserInterfaceComponent>(uid.Value))
-        {
-            foreach (var ui in uiComp.ClientOpenInterfaces.Values)
-            {
-                if (ui is PdaBoundUserInterface pdaBui)
-                {
-                    bui = pdaBui;
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    }
-    
-    // This method is called from PdaBoundUserInterface when it's disposed
-    public void ClosePopoutIfOpen()
-    {
-        try
-        {
-            // Check if we have any popout resources that need to be cleaned up
-            if (_isPopoutOpen || _popoutMenu != null || ClydeWindow != null || WindowRoot != null)
-            {
-                Log.Debug("Closing PDA popout window from ClosePopoutIfOpen");
-                ClosePopout();
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Error in ClosePopoutIfOpen: {ex}");
-            
-            // Force cleanup in case of error
-            _popoutMenu = null;
-            ClydeWindow = null;
-            WindowRoot = null;
-            _isPopoutOpen = false;
-            _isClosingPopout = false;
-        }
-    }
-    
-    // This method should be called during frame updates to check if the window is still valid
-    public void Update()
-    {
-        // Check if the window has been closed externally
-        if (_isPopoutOpen && (ClydeWindow == null || ClydeWindow.IsDisposed))
-        {
-            Log.Debug("Detected externally closed PDA popout window");
-            ClosePopout();
-        }
-    }
-    
-    public override void FrameUpdate(float frameTime)
-    {
-        base.FrameUpdate(frameTime);
-        
-        // Check window state during frame updates
-        Update();
-    }
-    
-    // Public method to check if the popout is currently open
-    public bool IsPopoutOpen()
-    {
-        // Check both our internal state flag and the actual window state
-        return _isPopoutOpen && ClydeWindow != null && !ClydeWindow.IsDisposed;
     }
     // Starlight-end
 }

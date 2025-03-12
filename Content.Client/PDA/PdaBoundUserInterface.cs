@@ -36,15 +36,7 @@ namespace Content.Client.PDA
 
             _menu.PopoutButton.OnPressed += _ =>
             {
-                // If the popout is already open, close it
-                if (_pdaSystem.IsPopoutOpen())
-                {
-                    _pdaSystem.ClosePopoutIfOpen();
-                    return;
-                }
-                
-                // Otherwise, send the message to open it
-                _pdaSystem.OnPdaPopout(_menu);
+                TogglePopout();
             };
 
             _menu.FlashLightToggleButton.OnToggled += _ =>
@@ -99,6 +91,27 @@ namespace Content.Client.PDA
             _menu.BorderColor = borderColorComponent.BorderColor;
             _menu.AccentHColor = borderColorComponent.AccentHColor;
             _menu.AccentVColor = borderColorComponent.AccentVColor;
+        }
+
+        // Method to toggle the PDA popout window
+        public void TogglePopout()
+        {
+            // If the menu is null, we can't do anything
+            if (_menu == null)
+                return;
+                
+            // If the popout is already open, close it
+            if (_pdaSystem.IsPopoutOpen())
+            {
+                _pdaSystem.ClosePopoutIfOpen();
+                return;
+            }
+            
+            // Otherwise, create a new popout window
+            _pdaSystem.CreatePopout(_menu);
+            
+            // Send a message to the server to notify about the popout state
+            SendMessage(new PdaPopout());
         }
 
         protected override void UpdateState(BoundUserInterfaceState state)
