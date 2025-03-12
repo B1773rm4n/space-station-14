@@ -18,6 +18,39 @@ public sealed class PdaSystem : SharedPdaSystem
 
     public ISawmill Log { get; private set; } = default!;
     
+    // <summary>
+    // Starlight-start: PDA Popout
+    // This is a beta version of the PDA popout system.
+    // It pops out a window from the original game window and creates a new OS window.
+    // </summary>
+
+    /* 
+        The problem with this implementation is that there are 3-4 ways to close a window.
+        It's easy to pop out the PDA. But to keep track of the popout and make sure that it
+        behaves consistent and is always closed,
+        no matter from what way of closing you chose is very hard.
+
+        According to Rinary, this needs a proper implementation including client/server communication.
+        This is planned to do in a different interation.
+        In the mean while this is released in a semi-buggy state.
+
+        Opening the popout usually works very well.
+        Closing can be an issue. A user will find out that
+        they have to close the OS window for the best result.
+
+        Known issues:
+        - The popout window remains open and black when the PDA is closed.
+            Generally the popout window has to be closed manually on the OS window frame.
+        - A second invocation of "Toggle UI" on the PDA context menu will not work and
+        have to be triggered another time
+        - Not introduced but became with this feature more obvious :
+            The Crew Monitor doesn't update by itself. So even if it's not popped out,
+            it have to be closed and reopened to get the latest data. I would advice a
+            running timer when the Crew Monitor is open which updates every 5 seconds.
+    */
+    
+    private readonly ISawmill _sawmill = Logger.GetSawmill("PdaSystem");
+
     private PdaMenu? _popoutMenu;
     private IClydeWindow? ClydeWindow;
     private WindowRoot? WindowRoot;
@@ -56,7 +89,7 @@ public sealed class PdaSystem : SharedPdaSystem
             }
             
             // Get the menu from the BUI
-            var menu = bui.GetMenu();
+            var menu = bui?.GetMenu();
             if (menu == null)
             {
                 Log.Error("PDA menu not found when trying to create popout");
@@ -101,6 +134,12 @@ public sealed class PdaSystem : SharedPdaSystem
             ClosePopout(); // Ensure cleanup if an error occurs
         }
     }
+
+    public void OnPdaPopout(PdaMenu menu)
+    {
+        // Create a new popout window
+        CreatePopout(menu);
+    }
         
     private void CreatePopout(PdaMenu menu)
     {
@@ -126,9 +165,13 @@ public sealed class PdaSystem : SharedPdaSystem
             // Subscribe to the window's close event
             menu.OnPdaWindowClosed += ClosePopoutIfOpen;
             
-            // Create a new window
-            var monitor = _clyde.EnumerateMonitors().First();
-            
+            // Get the second monitor as the primary monitor is the game window
+            // Or why else should someone want to pop out something if they
+            // aren't using at least 2 monitors/displays?
+            // Doesn't seem to work though
+            var monitor = _clyde.EnumerateMonitors().Skip(1).First();
+
+            // Create a new window        
             ClydeWindow = _clyde.CreateWindow(new WindowCreateParameters
             {
                 Maximized = false,
@@ -324,4 +367,5 @@ public sealed class PdaSystem : SharedPdaSystem
         // Check both our internal state flag and the actual window state
         return _isPopoutOpen && ClydeWindow != null && !ClydeWindow.IsDisposed;
     }
+    // Starlight-end
 }

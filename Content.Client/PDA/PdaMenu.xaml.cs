@@ -52,8 +52,7 @@ namespace Content.Client.PDA
             ViewContainer.OnChildAdded += control => control.Visible = false;
 
             HomeButton.IconTexture = new SpriteSpecifier.Texture(new("/Textures/Interface/home.png"));
-            // TODO implement popout button texture
-            PopoutButton.IconTexture = new SpriteSpecifier.Texture(new("/Textures/Interface/light.png"));
+            PopoutButton.IconTexture = new SpriteSpecifier.Texture(new("/Textures/Interface/popout.png"));
             FlashLightToggleButton.IconTexture = new SpriteSpecifier.Texture(new("/Textures/Interface/light.png"));
             EjectPenButton.IconTexture = new SpriteSpecifier.Texture(new("/Textures/Interface/pencil.png"));
             EjectIdButton.IconTexture = new SpriteSpecifier.Texture(new("/Textures/Interface/eject.png"));
