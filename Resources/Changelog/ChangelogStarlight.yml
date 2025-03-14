@@ -4024,4 +4024,41 @@ Entries:
   id: 557
   time: '2025-03-11T01:24:41.000000+00:00'
   url: https://github.com/ss14Starlight/space-station-14/pull/378
+- author: Killer Tamashi
+  changes:
+  - message: Fixed Bulwark arm breaking when shield is destroyed.
+    type: Fix
+  id: 558
+  time: '2025-03-12T15:04:31.000000+00:00'
+  url: https://github.com/ss14Starlight/space-station-14/pull/386
+- author: Happyrobot33
+  changes:
+  - message: Resomi and Cyclorites can now have proper Flash Immunity. They will lose
+      their special eye effects when they have Flash Immunity active from things such
+      as sunglasses
+    type: Tweak
+  id: 559
+  time: '2025-03-13T14:41:10.000000+00:00'
+  url: https://github.com/ss14Starlight/space-station-14/pull/382
+- author: Killer Tamashi
+  changes:
+  - message: Added Bulletproof Helmet
+    type: Add
+  id: 560
+  time: '2025-03-13T15:21:33.000000+00:00'
+  url: https://github.com/ss14Starlight/space-station-14/pull/385
+- author: Killer Tamashi
+  changes:
+  - message: Added Plate Carrier
+    type: Add
+  id: 561
+  time: '2025-03-13T15:21:33.000000+00:00'
+  url: https://github.com/ss14Starlight/space-station-14/pull/385
+- author: Killer Tamashi
+  changes:
+  - message: Added Stabproof Vest (Both can be picked at loadout or found in the secdrobe)
+    type: Add
+  id: 562
+  time: '2025-03-13T15:21:33.000000+00:00'
+  url: https://github.com/ss14Starlight/space-station-14/pull/385
 
